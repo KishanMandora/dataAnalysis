@@ -30,16 +30,51 @@ function getBuzzWord(data) {
     (key) => buzzWords[key] === maxCount
   );
 
-  console.log("buzzWordsArr", buzzWordsArr);
-
   return buzzWordsArr;
+}
+
+async function submitBuzzWord(email, assignmentId, buzzWords) {
+  let index = 0;
+  let isCorrect = false;
+
+  while (!isCorrect && index < buzzWords.length) {
+    try {
+      const response = await fetch(POST_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          answer: buzzWords[index],
+          assignment_id: assignmentId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.result === "submitted_correct") {
+        isCorrect = true;
+        break;
+      }
+    } catch (err) {
+      console.log(err);
+    }
+
+    index++;
+  }
+
+  return isCorrect ? buzzWords[index] : "No correct answer found";
 }
 
 async function completeDataAnalysis(email) {
   const [data, assignmentId] = await getData(email);
   const buzzWords = getBuzzWord(data);
+  const buzzWord = await submitBuzzWord(email, assignmentId, buzzWords);
 
-  console.log("buzzWords", buzzWords);
+  console.log(
+    `The buzz word for ${email} with assignmentId ${assignmentId} is ${buzzWord}`
+  );
 }
 
 completeDataAnalysis(email);
